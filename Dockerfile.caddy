@@ -1,0 +1,12 @@
+FROM oven/bun:alpine AS frontend-build
+ARG VITE_API_URL
+WORKDIR /src
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install
+COPY frontend/ .
+RUN VITE_API_URL=$VITE_API_URL bun run build
+
+FROM caddy:alpine
+COPY --from=frontend-build /src/build /www
+COPY Caddyfile /etc/caddy/Caddyfile
+EXPOSE 80 443

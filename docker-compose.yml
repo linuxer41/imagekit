@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: imagekit
+      POSTGRES_PASSWORD: anarkia41
+      POSTGRES_DB: imagekit
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U imagekit"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  imager:
+    build:
+      context: .
+      dockerfile: Dockerfile.imager
+    ports:
+      - "9000:9000"
+    env_file: .env
+    volumes:
+      - .env:/app/.env:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "9090:8080"
+    env_file: .env
+    volumes:
+      - .env:/app/.env:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  panel:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+      args:
+        VITE_API_URL: "http://localhost:9090"
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

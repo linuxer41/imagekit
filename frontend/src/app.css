@@ -1,0 +1,42 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --c-bg: #0f172a;
+  --c-surface: #1e293b;
+  --c-border: #334155;
+  --c-text: #f1f5f9;
+  --c-muted: #94a3b8;
+  --c-dim: #64748b;
+  --c-primary: #3b82f6;
+  --c-primary-hover: #2563eb;
+  --c-success: #22c55e;
+  --c-warning: #eab308;
+  --c-danger: #ef4444;
+  --c-info: #06b6d4;
+
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --font: system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+}
+
+html {
+  font-family: var(--font);
+  background: var(--c-bg);
+  color: var(--c-text);
+  line-height: 1.5;
+}
+
+body { min-height: 100vh; }
+
+a { color: var(--c-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input, select, textarea, button { font: inherit; color: inherit; }
+
+table { border-collapse: collapse; width: 100%; }
