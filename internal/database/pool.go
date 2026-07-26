@@ -10,8 +10,13 @@ import (
 )
 
 func InitPool(cfg *config.Config) (*pgxpool.Pool, error) {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s&pool_min_conns=%d&pool_max_conns=%d",
-		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.SSLMode, cfg.MinConns, cfg.MaxConns)
+	var dsn string
+	if cfg.DBURL != "" {
+		dsn = cfg.DBURL
+	} else {
+		dsn = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.SSLMode)
+	}
 
 	poolCfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

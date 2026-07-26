@@ -9,6 +9,7 @@ import (
 type Config struct {
 	HTTPAddr      string
 	ImagerHTTPAddr string
+	DBURL         string
 	DBHost        string
 	DBPort        int
 	DBUser        string
@@ -46,21 +47,22 @@ func Load() *Config {
 	return &Config{
 		HTTPAddr:       addPort(env("HTTP_ADDR", ""), ":8080"),
 		ImagerHTTPAddr: addPort(env("IMAGER_HTTP_ADDR", ""), ":9000"),
-		DBHost:      env("DB_HOST", "127.0.0.1"),
-		DBPort:      envInt("DB_PORT", 5432),
-		DBUser:      env("DB_USER", "linuxer"),
-		DBPass:      env("DB_PASSWORD", ""),
-		DBName:      env("DB_NAME", "vendemas_v2"),
-		SSLMode:     env("DB_SSLMODE", "disable"),
-		MinConns:    envInt("DB_MIN_CONNS", 2),
-		MaxConns:    envInt("DB_MAX_CONNS", 10),
-		JWTSecret:   env("JWT_SECRET", ""),
-		LogLevel:    env("LOG_LEVEL", "info"),
+		DBURL:      env("DB_URL", ""),
+		DBHost:     env("DB_HOST", "127.0.0.1"),
+		DBPort:     envInt("DB_PORT", 5432),
+		DBUser:     env("DB_USER", "linuxer"),
+		DBPass:     env("DB_PASSWORD", ""),
+		DBName:     env("DB_NAME", "vendemas_v2"),
+		SSLMode:    env("DB_SSLMODE", "disable"),
+		MinConns:   envInt("DB_MIN_CONNS", 2),
+		MaxConns:   envInt("DB_MAX_CONNS", 10),
+		JWTSecret:  env("JWT_SECRET", ""),
+		LogLevel:   env("LOG_LEVEL", "info"),
 		CacheSizeMB: envInt("CACHE_SIZE_MB", 256),
-		CacheTTL:    envInt("CACHE_TTL_SEC", 86400),
-		AdminUser:    env("ADMIN_USER", "admin"),
-		AdminPass:    env("ADMIN_PASSWORD", "admin123"),
-		CORSOrigins:  env("CORS_ORIGINS", "*"),
+		CacheTTL:   envInt("CACHE_TTL_SEC", 86400),
+		AdminUser:  env("ADMIN_USER", "admin"),
+		AdminPass:  env("ADMIN_PASSWORD", "admin123"),
+		CORSOrigins: env("CORS_ORIGINS", "*"),
 	}
 }
 
@@ -75,14 +77,16 @@ func addPort(v string, def string) string {
 }
 
 func (c *Config) Validate() error {
-	if c.DBHost == "" {
-		return fmt.Errorf("DB_HOST is required")
-	}
-	if c.DBUser == "" {
-		return fmt.Errorf("DB_USER is required")
-	}
-	if c.DBName == "" {
-		return fmt.Errorf("DB_NAME is required")
+	if c.DBURL == "" {
+		if c.DBHost == "" {
+			return fmt.Errorf("DB_HOST is required when DB_URL is not set")
+		}
+		if c.DBUser == "" {
+			return fmt.Errorf("DB_USER is required when DB_URL is not set")
+		}
+		if c.DBName == "" {
+			return fmt.Errorf("DB_NAME is required when DB_URL is not set")
+		}
 	}
 	if c.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET is required")
