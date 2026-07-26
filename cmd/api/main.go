@@ -1,17 +1,20 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
 
 	"github.com/vendemas/imagekit/internal/auth"
+	"github.com/vendemas/imagekit/internal/cache"
 	"github.com/vendemas/imagekit/internal/config"
 	"github.com/vendemas/imagekit/internal/database"
 	"github.com/vendemas/imagekit/internal/middleware"
 	"github.com/vendemas/imagekit/internal/router"
 	"github.com/vendemas/imagekit/internal/server"
+	"github.com/vendemas/imagekit/internal/tenant"
 )
 
 func main() {
@@ -41,10 +44,17 @@ func main() {
 	jwt := auth.NewJWT(cfg.JWTSecret)
 	corsMW := middleware.NewCORS(cfg.CORSOrigins)
 
+	projectCache := tenant.NewProjectCache(repo)
+	lruCache := cache.NewLRUCache(cfg.CacheSizeMB, cfg.CacheTTL)
+
+	ctx := context.Background()
+	projectCache.Start(ctx)
+	defer projectCache.Stop()
+
 	panelDir := os.Getenv("PANEL_DIR")
 	adminDir := os.Getenv("ADMIN_DIR")
 
-	handler := router.NewAPIRouter(jwt, repo, corsMW, panelDir, adminDir)
+	handler := router.NewAPIRouter(jwt, repo, corsMW, projectCache, lruCache, panelDir, adminDir)
 
 	server.Run(cfg.HTTPAddr, handler)
 }

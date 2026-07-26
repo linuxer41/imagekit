@@ -279,6 +279,7 @@ Authorization: Bearer <token>
 | `POST` | `/api/panel/auth/refresh` | Refrescar token |
 | `GET` | `/api/panel/account` | Obtener datos de la cuenta |
 | `PUT` | `/api/panel/account` | Actualizar nombre de la cuenta |
+| `DELETE` | `/api/panel/images/{slug}/*` | Eliminar imagen del storage e invalidar caché |
 | `GET` | `/api/panel/projects/{id}/metrics` | Métricas del proyecto |
 | `GET` | `/api/panel/projects/{id}/summary` | Resumen del proyecto |
 | `GET` | `/api/panel/metrics` | Métricas del tenant |

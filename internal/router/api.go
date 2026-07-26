@@ -12,14 +12,18 @@ import (
 
 	"github.com/vendemas/imagekit/internal/api"
 	"github.com/vendemas/imagekit/internal/auth"
+	"github.com/vendemas/imagekit/internal/cache"
 	"github.com/vendemas/imagekit/internal/database"
 	"github.com/vendemas/imagekit/internal/middleware"
+	"github.com/vendemas/imagekit/internal/tenant"
 )
 
 func NewAPIRouter(
 	jwt *auth.JWT,
 	repo *database.Repo,
 	corsMiddleware *middleware.CORS,
+	projectCache *tenant.ProjectCache,
+	lruCache *cache.LRUCache,
 	panelDir string,
 	adminDir string,
 ) http.Handler {
@@ -58,6 +62,9 @@ func NewAPIRouter(
 	accountHandler := api.NewAccountHandler(repo)
 	panelAPI.Get("/account", accountHandler.Get)
 	panelAPI.Put("/account", accountHandler.Update)
+
+	imagesHandler := api.NewImagesHandler(repo, projectCache, lruCache)
+	panelAPI.Delete("/images/{slug}/*", imagesHandler.Delete)
 
 	metricsHandler := api.NewMetricsHandler(repo)
 	panelAPI.Get("/projects/{id}/metrics", metricsHandler.ProjectMetrics)
