@@ -34,7 +34,7 @@ func NewImagerRouter(
 	r.Handle("/metrics", promhttp.Handler())
 
 	imageHandler := image.NewHandler(projectCache, lruCache, recorder)
-	r.With(middleware.RateLimit(rateLimiter)).Get("/{slug}/{*}", imageHandler.Serve)
+	r.With(middleware.RateLimit(rateLimiter)).Get("/{slug}/*", imageHandler.Serve)
 
 	return r
 }

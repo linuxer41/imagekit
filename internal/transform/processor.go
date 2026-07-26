@@ -75,13 +75,16 @@ func ProcessImage(input []byte, p params.Params) ([]byte, string, error) {
 }
 
 func applyResize(img *vips.ImageRef, p params.Params) error {
+	if p.Aspect != "" {
+		if err := applyAspectRatio(img, p.Aspect); err != nil {
+			return err
+		}
+	}
+
 	w := p.Width
 	h := p.Height
 
 	if w <= 0 && h <= 0 {
-		if p.Aspect != "" {
-			return applyAspectRatio(img, p.Aspect)
-		}
 		return nil
 	}
 
@@ -145,9 +148,21 @@ func resizeAtMax(img *vips.ImageRef, w, h int) error {
 }
 
 func applyPadResize(img *vips.ImageRef, w, h int, p params.Params) error {
-	scaleW := float64(w) / float64(img.Width())
-	scaleH := float64(h) / float64(img.Height())
-	scale := math.Min(scaleW, scaleH)
+	var scale float64
+	if w > 0 && h > 0 {
+		scaleW := float64(w) / float64(img.Width())
+		scaleH := float64(h) / float64(img.Height())
+		scale = math.Min(scaleW, scaleH)
+	} else if w > 0 {
+		scale = float64(w) / float64(img.Width())
+		h = int(float64(img.Height()) * scale)
+	} else if h > 0 {
+		scale = float64(h) / float64(img.Height())
+		w = int(float64(img.Width()) * scale)
+	} else {
+		return nil
+	}
+
 	if scale < 1 {
 		if err := img.Resize(scale, vips.KernelLanczos3); err != nil {
 			return err
