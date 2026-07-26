@@ -1,10 +1,16 @@
-FROM golang:alpine AS build
-RUN apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/v3.21/community vips-dev gcc musl-dev pkgconfig
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:latest AS xx
+FROM --platform=$BUILDPLATFORM golang:alpine AS build
+ARG TARGETARCH
+COPY --from=xx / /
+RUN apk add --no-cache clang lld pkgconfig
+RUN xx-apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/v3.21/community vips-dev
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=1 go build -trimpath -o /bin/imager ./cmd/imager/
+RUN CGO_ENABLED=1 \
+    PKG_CONFIG=$(xx-go --pkg-config) \
+    xx-go build -trimpath -o /bin/imager ./cmd/imager/
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata vips

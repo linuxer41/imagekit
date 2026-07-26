@@ -1,9 +1,10 @@
-FROM golang:alpine AS build
+FROM --platform=$BUILDPLATFORM golang:alpine AS build
+ARG TARGETARCH
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -o /bin/api ./cmd/api/
+RUN GOARCH=$TARGETARCH CGO_ENABLED=0 go build -trimpath -o /bin/api ./cmd/api/
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata

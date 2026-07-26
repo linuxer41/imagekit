@@ -1,4 +1,4 @@
-FROM oven/bun:alpine AS frontend-build
+FROM --platform=$BUILDPLATFORM oven/bun:alpine AS frontend-build
 ARG VITE_API_URL
 WORKDIR /src
 COPY frontend/package.json frontend/bun.lock ./
