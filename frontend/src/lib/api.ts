@@ -24,6 +24,12 @@ async function api<T = unknown>(path: string, opts?: RequestInit): Promise<T> {
   if (!headers['Content-Type'] && opts?.body) headers['Content-Type'] = 'application/json';
 
   const res = await fetch(BASE + path, { ...opts, headers });
+  if (res.status === 403) {
+    clearTokens();
+    const dest = path.startsWith('/api/admin/') ? '/admin/login' : '/login';
+    window.location.href = dest;
+    return undefined as T;
+  }
   if (!res.ok) {
     const text = await res.text();
     let msg: string;

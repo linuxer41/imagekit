@@ -56,10 +56,10 @@ type Invitation struct {
 }
 
 type ProjectMetrics struct {
-	ID                int64 `json:"id"`
-	ProjectID         int   `json:"project_id"`
-	Date              string `json:"date"`
-	Hour              int   `json:"hour"`
+	ID                int64     `json:"id"`
+	ProjectID         int       `json:"project_id"`
+	Date              time.Time `json:"date"`
+	Hour              int       `json:"hour"`
 	Requests          int64 `json:"requests"`
 	CacheHits         int64 `json:"cache_hits"`
 	CacheMisses       int64 `json:"cache_misses"`
@@ -71,7 +71,7 @@ type ProjectMetrics struct {
 }
 
 type ProjectMetricsDaily struct {
-	Date              string `json:"date"`
+	Date              time.Time `json:"date"`
 	Requests          int64  `json:"requests"`
 	CacheHits         int64  `json:"cache_hits"`
 	CacheMisses       int64  `json:"cache_misses"`

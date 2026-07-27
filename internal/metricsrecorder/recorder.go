@@ -103,7 +103,7 @@ func (r *Recorder) flush(ctx context.Context) {
 	}
 
 	now := time.Now()
-	date := now.Format("2006-01-02")
+	date := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	hour := now.Hour()
 
 	for projectID, pc := range snap {
