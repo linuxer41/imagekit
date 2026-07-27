@@ -78,7 +78,7 @@ type ProjectMetricsDaily struct {
 	OriginTransforms  int64  `json:"origin_transforms"`
 	BandwidthBytes    int64  `json:"bandwidth_bytes"`
 	Errors            int64  `json:"errors"`
-	AvgResponseTimeMs int64  `json:"avg_response_time_ms"`
+	AvgResponseTimeMs float64 `json:"avg_response_time_ms"`
 }
 
 type ProjectSummary struct {
