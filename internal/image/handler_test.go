@@ -114,6 +114,12 @@ func TestValidateFilePath(t *testing.T) {
 	if err := validateFilePath("/absolute/path.jpg"); err == nil {
 		t.Error("expected error for absolute path")
 	}
+	if err := validateFilePath("folder/blue_seduccion_man_100ml_a.b..jpg"); err != nil {
+		t.Errorf("expected no error for file with double dot in name, got %v", err)
+	}
+	if err := validateFilePath("subdir/../../etc/passwd"); err == nil {
+		t.Error("expected error for .. as path component")
+	}
 }
 
 func TestDetectContentType(t *testing.T) {

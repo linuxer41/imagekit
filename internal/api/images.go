@@ -78,8 +78,10 @@ func validateImagePath(filePath string) error {
 	if filepath.Clean(filePath) != filePath {
 		return fmt.Errorf("invalid path")
 	}
-	if strings.Contains(filePath, "..") {
-		return fmt.Errorf("path traversal")
+	for _, part := range strings.Split(filePath, string(filepath.Separator)) {
+		if part == ".." {
+			return fmt.Errorf("path traversal")
+		}
 	}
 	return nil
 }

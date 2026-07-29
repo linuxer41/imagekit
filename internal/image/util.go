@@ -4,14 +4,21 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 )
 
 func validateFilePath(filePath string) error {
-	clean := filepath.Clean(filePath)
-	if strings.Contains(clean, "..") {
-		return fmt.Errorf("path traversal detected")
+	decoded, err := url.PathUnescape(filePath)
+	if err != nil {
+		decoded = filePath
+	}
+	clean := filepath.Clean(decoded)
+	for _, part := range strings.Split(clean, string(filepath.Separator)) {
+		if part == ".." {
+			return fmt.Errorf("path traversal detected")
+		}
 	}
 	if strings.HasPrefix(clean, "/") || strings.HasPrefix(clean, "\\") {
 		return fmt.Errorf("path must not start with separator")

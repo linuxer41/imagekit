@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ImageKit - Guía de Transformación de Imágenes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1a1a2e;background:#f8f9fa;line-height:1.7;padding:40px}
+.page{max-width:880px;margin:0 auto;background:#fff;padding:60px 64px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+h1{font-size:28px;margin-bottom:4px;letter-spacing:-.3px}
+h2{font-size:20px;margin-top:40px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e9ecef}
+h3{font-size:16px;margin-top:28px;margin-bottom:8px;color:#2d3748}
+p,li{margin-bottom:10px;font-size:14px}
+code{background:#edf2f7;padding:2px 7px;border-radius:4px;font-size:13px;font-family:'JetBrains Mono','Cascadia Code','Fira Code',monospace;word-break:break-all}
+pre{background:#1a1a2e;color:#e2e8f0;padding:18px 20px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6;margin:14px 0 20px;font-family:'JetBrains Mono','Cascadia Code','Fira Code',monospace}
+pre .hl{color:#fbbf24}
+pre .cm{color:#6b7280}
+pre .s{color:#a78bfa}
+pre .k{color:#60a5fa}
+pre .v{color:#34d399}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}
+th,td{text-align:left;padding:8px 12px;border:1px solid #e2e8f0}
+th{background:#f1f5f9;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+tr:nth-child(even){background:#fafbfc}
+.tag{display:inline-block;background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 8px;border-radius:4px;font-weight:600}
+.tag-r{background:#fee2e2;color:#991b1b}
+.tag-g{background:#dcfce7;color:#166534}
+.tag-y{background:#fef9c3;color:#854d0e}
+.note{background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:4px;margin:14px 0;font-size:13px}
+.note code{background:#fef3c7}
+.sub{margin-top:4px;font-size:12px;color:#64748b}
+.footer{margin-top:48px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}
+@media print{body{background:#fff;padding:0}.page{box-shadow:none;padding:40px 48px}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>ImageKit</h1>
+<p style="color:#64748b;font-size:15px;margin-bottom:32px">Guía de Transformación de Imágenes &mdash; Parámetros <code>tr</code></p>
+
+<h2>1. Conceptos Básicos</h2>
+<p>Todas las transformaciones se especifican vía <strong>query string</strong> <code>?tr=...</code> en la URL de la imagen. Los parámetros se separan por <code>,</code> y usan el formato <code>clave-valor</code> con guión.</p>
+<pre><span class="cm">// Formato general</span>
+GET /{<span class="v">slug</span>}/{<span class="v">filepath</span>}?tr=<span class="k">param1</span>,<span class="k">param2</span>,...
+
+<span class="cm">// Ejemplo real</span>
+GET /vendemas/productos/foto.webp?tr=<span class="k">w-800</span>,<span class="k">q-80</span>,<span class="k">f-webp</span></pre>
+
+<h2>2. Dimensiones y Recorte</h2>
+<table>
+<thead><tr><th>Parámetro</th><th>Formato</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>w</code></td><td><code>w-{n}</code></td><td>Ancho en píxeles</td></tr>
+<tr><td><code>h</code></td><td><code>h-{n}</code></td><td>Alto en píxeles</td></tr>
+<tr><td><code>cm</code></td><td><code>cm-{mode}</code></td><td>Modo de recorte / ajuste</td></tr>
+<tr><td><code>ar</code></td><td><code>ar-{num}-{den}</code></td><td>Relación de aspecto (se aplica <strong>antes</strong> del resize)</td></tr>
+</tbody>
+</table>
+
+<h3>2.1 Modos de Recorte (<code>cm</code>)</h3>
+<table>
+<thead><tr><th>Modo</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>force</code></td><td>Redimensiona forzando a las dimensiones exactas (distorsiona si es necesario)</td></tr>
+<tr><td><code>at_max</code></td><td>Reduce hasta que quepa dentro de w&times;h, sin agrandar si es más pequeña</td></tr>
+<tr><td><code>at_least</code></td><td>Similar a force pero mantiene proporción</td></tr>
+<tr><td><code>max_size_enum</code></td><td>Similar a at_max</td></tr>
+<tr><td><code>maintain_ratio</code></td><td>Mantiene proporción</td></tr>
+<tr><td><code>pad_resize</code></td><td>Escala para que quepa dentro de w&times;h y rellena con color de fondo</td></tr>
+<tr><td><code>extract</code></td><td>Extrae una región</td></tr>
+<tr><td><code>crop</code></td><td>Recorta el centro después de escalar</td></tr>
+<tr><td><code>trim</code></td><td>Recorta bordes</td></tr>
+</tbody>
+</table>
+
+<h2>3. Fondo Transparente</h2>
+<p>Para obtener una imagen con fondo transparente se combinan tres parámetros clave:</p>
+
+<h3>3.1 Forzar Formato PNG</h3>
+<p>El formato <strong>PNG</strong> es necesario porque soporta canal alfa (transparencia). WebP también lo soporta con lossless.</p>
+<table>
+<thead><tr><th>Parámetro</th><th>Ejemplo</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>f</code></td><td><code>f-png</code></td><td>Formato de salida PNG</td></tr>
+<tr><td><code>f</code></td><td><code>f-webp</code></td><td>WebP (usar con <code>lo-true</code> para lossless)</td></tr>
+</tbody>
+</table>
+
+<h3>3.2 Color de Fondo con Canal Alfa</h3>
+<p>El parámetro <code>bg</code> acepta formato <code>RRGGBB</code> o <code>RRGGBBAA</code>. Para transparencia total se usa <code>bg-00000000</code> (alpha en <code>00</code>).</p>
+<table>
+<thead><tr><th>Valor</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>bg-FF0000</code></td><td>Fondo rojo opaco</td></tr>
+<tr><td><code>bg-FFFFFF</code></td><td>Fondo blanco opaco</td></tr>
+<tr><td><code>bg-00000000</code></td><td>Fondo completamente transparente</td></tr>
+<tr><td><code>bg-FF000080</code></td><td>Rojo con 50% de opacidad</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Pad Resize + Fondo Transparente</h3>
+<p>Cuando una imagen no tiene la relación de aspecto deseada, <code>cm-pad_resize</code> escala la imagen para que quepa dentro de w&times;h y rellena el espacio sobrante con el color <code>bg</code>.</p>
+
+<pre><span class="cm">// Imagen rectangular → cuadrada 800x800 con fondo transparente</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-1-1</span>,<span class="k">w-800</span>,<span class="k">cm-pad_resize</span>,<span class="k">f-png</span>,<span class="k">bg-00000000</span>
+
+<span class="cm">// Sin ar (rellena según w/h especificados)</span>
+GET /vendemas/foto.webp?tr=<span class="k">w-800</span>,<span class="k">h-800</span>,<span class="k">cm-pad_resize</span>,<span class="k">f-png</span>,<span class="k">bg-00000000</span>
+
+<span class="cm">// WebP lossless con transparencia</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-16-9</span>,<span class="k">w-1920</span>,<span class="k">cm-pad_resize</span>,<span class="k">f-webp</span>,<span class="k">lo-true</span>,<span class="k">bg-00000000</span></pre>
+
+<div class="note">
+<strong>Comportamiento de <code>pad_resize</code>:</strong>
+<ol style="margin:8px 0 0 18px">
+<li>Escala la imagen para que quepa dentro de w&times;h (usa la escala menor)</li>
+<li>Si una dimensión no se especifica, se calcula proporcionalmente</li>
+<li>Rellena el espacio sobrante con el color <code>bg</code></li>
+<li>Nunca agranda la imagen (solo escala &le; 1)</li>
+<li>Si la imagen ya es más pequeña, solo la centra sobre el fondo</li>
+</ol>
+</div>
+
+<h2>4. Ajustar a Cuadro (Encuadre)</h2>
+<p>Para forzar que cualquier imagen se ajuste a un encuadre específico (por ejemplo, cuadrado 1:1) rellenando el espacio sobrante:</p>
+
+<h3>4.1 Con Fondo de Color Sólido</h3>
+<pre><span class="cm">// Cuadrado 800x800, fondo blanco</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-1-1</span>,<span class="k">w-800</span>,<span class="k">cm-pad_resize</span>,<span class="k">bg-FFFFFF</span>
+
+<span class="cm">// Rectángulo 16:9, 1920x1080, fondo negro</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-16-9</span>,<span class="k">w-1920</span>,<span class="k">h-1080</span>,<span class="k">cm-pad_resize</span>,<span class="k">bg-000000</span></pre>
+
+<h3>4.2 Con Fondo Transparente</h3>
+<pre><span class="cm">// Cuadrado 800x800 con bordes transparentes</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-1-1</span>,<span class="k">w-800</span>,<span class="k">cm-pad_resize</span>,<span class="k">f-png</span>,<span class="k">bg-00000000</span>
+
+<span class="cm">// 4:3 con fondo transparente</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-4-3</span>,<span class="k">w-800</span>,<span class="k">cm-pad_resize</span>,<span class="k">f-png</span>,<span class="k">bg-00000000</span></pre>
+
+<h3>4.3 Recortando en Vez de Rellenar</h3>
+<p>Si prefieres <strong>recortar</strong> el sobrante en lugar de rellenarlo, usa <code>cm-crop</code>:</p>
+<pre><span class="cm">// Recorta el centro para ajustar a cuadrado</span>
+GET /vendemas/foto.webp?tr=<span class="k">ar-1-1</span>,<span class="k">w-800</span>,<span class="k">cm-crop</span></pre>
+
+<h2>5. Formato y Calidad</h2>
+<table>
+<thead><tr><th>Parámetro</th><th>Formato</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>f</code></td><td><code>f-{formato}</code></td><td>Formato: <code>webp</code>, <code>png</code>, <code>jpg</code>, <code>avif</code>, <code>gif</code></td></tr>
+<tr><td><code>q</code></td><td><code>q-{1-100}</code></td><td>Calidad (por defecto: 80)</td></tr>
+<tr><td><code>pr</code></td><td><code>pr-true</code></td><td>Progressive (JPEG/PNG)</td></tr>
+<tr><td><code>lo</code></td><td><code>lo-true</code></td><td>Lossless (WebP &mdash; necesario para transparencia en WebP)</td></tr>
+<tr><td><code>md</code></td><td><code>md-true</code></td><td>Conservar metadatos</td></tr>
+</tbody>
+</table>
+
+<p>Si no se especifica <code>f</code>, el formato se auto-detecta:</p>
+<ol>
+<li>Si el cliente acepta AVIF via <code>Accept</code> header &rarr; avif</li>
+<li>Si el cliente acepta WebP &rarr; webp</li>
+<li>Si no &rarr; usa el <code>default_format</code> del proyecto</li>
+</ol>
+
+<div class="note">
+<strong>Importante:</strong> Para preservar transparencia, el formato de salida <strong>debe</strong> soportar canal alfa. Usa <code>f-png</code> o <code>f-webp</code> con <code>lo-true</code>. JPEG <strong>no</strong> soporta transparencia.
+</div>
+
+<h2>6. Rotación, Efectos y Recorte Automático</h2>
+<table>
+<thead><tr><th>Parámetro</th><th>Formato</th><th>Descripción</th><th>Ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>rt</code></td><td><code>rt-{deg}</code></td><td>Rotación en grados</td><td><code>rt-90</code></td></tr>
+<tr><td><code>e</code></td><td><code>e-{effect}</code></td><td>Efecto</td><td><code>e-grayscale</code>, <code>e-sharpen</code></td></tr>
+<tr><td><code>bl</code></td><td><code>bl-{float}</code></td><td>Difuminado (Gaussian Blur)</td><td><code>bl-5.0</code></td></tr>
+<tr><td><code>t</code></td><td><code>t-{threshold}</code></td><td>Recorte automático de bordes</td><td><code>t-10</code></td></tr>
+</tbody>
+</table>
+
+<h3>Efectos Disponibles</h3>
+<table>
+<thead><tr><th>Efecto</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>grayscale</code></td><td>Convierte a escala de grises</td></tr>
+<tr><td><code>sharpen</code></td><td>Aplica enfoque (sharpness=1.0, sigma=2.0)</td></tr>
+</tbody>
+</table>
+
+<h2>7. Superposiciones y Bordes</h2>
+<table>
+<thead><tr><th>Parámetro</th><th>Formato</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>oi</code></td><td><code>oi-{path}</code></td><td>Ruta de imagen a superponer</td></tr>
+<tr><td><code>ot</code></td><td><code>ot-{text}</code></td><td>Texto a superponer</td></tr>
+<tr><td><code>ox</code></td><td><code>ox-{px}</code></td><td>Posición X de la superposición</td></tr>
+<tr><td><code>oy</code></td><td><code>oy-{px}</code></td><td>Posición Y de la superposición</td></tr>
+<tr><td><code>ow</code></td><td><code>ow-{px}</code></td><td>Ancho de superposición</td></tr>
+<tr><td><code>oh</code></td><td><code>oh-{px}</code></td><td>Alto de superposición</td></tr>
+<tr><td><code>b</code></td><td><code>b-{n}_{color}</code></td><td>Borde (ancho_color)</td></tr>
+<tr><td><code>l</code></td><td><code>l-{px}</code></td><td>Radio de borde redondeado</td></tr>
+</tbody>
+</table>
+
+<h2>8. Ejemplos Completos</h2>
+
+<pre><span class="cm">// 1. Imagen a cuadrado 800x800 con fondo transparente</span>
+GET /mi-proyecto/logo.png?tr=<span class="k">ar-1-1,w-800,cm-pad_resize,f-png,bg-00000000</span>
+
+<span class="cm">// 2. Thumbnail 300x300, recorte centro, WebP</span>
+GET /mi-proyecto/foto.jpg?tr=<span class="k">w-300,h-300,cm-crop,f-webp,q-80</span>
+
+<span class="cm">// 3. Banner 16:9, 1920x1080, fondo negro, escala de grises</span>
+GET /mi-proyecto/foto.jpg?tr=<span class="k">ar-16-9,w-1920,h-1080,cm-pad_resize,bg-000000,e-grayscale</span>
+
+<span class="cm">// 4. Rotar 90&deg;, formato PNG, lossless</span>
+GET /mi-proyecto/foto.webp?tr=<span class="k">rt-90,f-png</span>
+
+<span class="cm">// 5. Recorte automático de bordes + blur + WebP</span>
+GET /mi-proyecto/foto.png?tr=<span class="k">t-10,bl-3.0,f-webp,q-85</span>
+
+<span class="cm">// 6. Redimensionar a 400px con calidad 90</span>
+GET /mi-proyecto/foto.jpg?tr=<span class="k">w-400,q-90</span></pre>
+
+<h2>9. Resumen Rápido de Parámetros</h2>
+<table>
+<thead><tr><th>Parámetro</th><th>Formato</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td><code>ar</code></td><td><code>ar-{num}-{den}</code></td><td>Relación de aspecto (ej: <code>ar-1-1</code>, <code>ar-16-9</code>, <code>ar-4-3</code>)</td></tr>
+<tr><td><code>w</code></td><td><code>w-{n}</code></td><td>Ancho en píxeles</td></tr>
+<tr><td><code>h</code></td><td><code>h-{n}</code></td><td>Alto en píxeles</td></tr>
+<tr><td><code>cm</code></td><td><code>cm-{mode}</code></td><td>Modo de recorte (<code>pad_resize</code>, <code>crop</code>, <code>force</code>, etc.)</td></tr>
+<tr><td><code>f</code></td><td><code>f-{fmt}</code></td><td>Formato de salida</td></tr>
+<tr><td><code>q</code></td><td><code>q-{1-100}</code></td><td>Calidad</td></tr>
+<tr><td><code>bg</code></td><td><code>bg-{RRGGBB[AA]}</code></td><td>Color de fondo (con alpha opcional)</td></tr>
+<tr><td><code>rt</code></td><td><code>rt-{deg}</code></td><td>Rotación</td></tr>
+<tr><td><code>e</code></td><td><code>e-{effect}</code></td><td>Efecto</td></tr>
+<tr><td><code>bl</code></td><td><code>bl-{float}</code></td><td>Gaussian blur</td></tr>
+<tr><td><code>t</code></td><td><code>t-{n}</code></td><td>Recorte automático de bordes</td></tr>
+<tr><td><code>lo</code></td><td><code>lo-true</code></td><td>Lossless (WebP)</td></tr>
+<tr><td><code>pr</code></td><td><code>pr-true</code></td><td>Progressive</td></tr>
+<tr><td><code>md</code></td><td><code>md-true</code></td><td>Conservar metadatos</td></tr>
+</tbody>
+</table>
+
+<div class="footer">
+ImageKit &mdash; Servicio de optimización y transformación de imágenes en tiempo real
+</div>
+
+</div>
+</body>
+</html>
