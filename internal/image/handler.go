@@ -128,14 +128,13 @@ func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) {
 		out, contentType, err := transform.ProcessImage(data, imgParams)
 		metrics.TransformDuration.WithLabelValues(string(imgParams.Format)).Observe(time.Since(transformStart).Seconds())
 		if err != nil {
-			slog.Error("transform", "slug", slug, "error", err)
+			slog.Warn("transform failed, serving original", "slug", slug, "error", err)
 			metrics.ErrorsTotal.WithLabelValues(slug, "transform_error").Inc()
-			hasError = true
-			http.Error(w, "transform failed", http.StatusInternalServerError)
-			return
+			contentType = detectContentType(data, filePath)
+			out = data
 		}
 
-		hasTransform = true
+		hasTransform = err == nil
 		bandwidth = int64(len(out))
 		h.lruCache.Set(cacheKey, out, contentType)
 		metrics.RequestsTotal.WithLabelValues(slug, contentType, "true").Inc()
