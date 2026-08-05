@@ -128,11 +128,9 @@ Los parámetros se especifican como `clave-valor` separados por `,` usando el fo
 | `trim` | Recorta bordes |
 
 **Comportamiento de `pad_resize`:**
-1. Escala la imagen para que quepa dentro de w×h (usa la escala menor)
+1. Escala la imagen para que quepa dentro de w×h (usa la escala menor), **agrandando si es necesario**
 2. Si una dimensión no se especifica, se calcula proporcionalmente
-3. Rellena el espacio sobrante con el color `bg`
-4. Nunca agranda la imagen (solo escala `≤ 1`)
-5. Si la imagen ya es más pequeña que w×h, solo la centra sobre el fondo
+3. Rellena el espacio sobrante con el color `bg`, **centrando** la imagen
 
 **Comportamiento de `at_max`:**
 - Escala solo si la imagen excede w×h

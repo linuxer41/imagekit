@@ -163,7 +163,9 @@ func applyPadResize(img *vips.ImageRef, w, h int, p params.Params) error {
 		return nil
 	}
 
-	if scale < 1 {
+	// Escala siempre (también agranda) para que la imagen llene el marco
+	// tanto como sea posible manteniendo la proporción.
+	if scale != 1 {
 		if err := img.Resize(scale, vips.KernelLanczos3); err != nil {
 			return err
 		}
@@ -171,6 +173,7 @@ func applyPadResize(img *vips.ImageRef, w, h int, p params.Params) error {
 
 	bg := parseBGColor(p.BgColor)
 
+	// Rellena el espacio sobrante con el color de fondo, centrando la imagen.
 	if img.Width() < w || img.Height() < h {
 		padW := w
 		padH := h
@@ -180,7 +183,9 @@ func applyPadResize(img *vips.ImageRef, w, h int, p params.Params) error {
 		if padH < img.Height() {
 			padH = img.Height()
 		}
-		return img.EmbedBackgroundRGBA(0, 0, padW, padH, &bg)
+		left := (padW - img.Width()) / 2
+		top := (padH - img.Height()) / 2
+		return img.EmbedBackgroundRGBA(left, top, padW, padH, &bg)
 	}
 
 	return nil
