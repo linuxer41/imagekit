@@ -180,6 +180,14 @@ func applyPadResize(img *vips.ImageRef, w, h int, p params.Params) error {
 
 	bg := parseBGColor(p.BgColor)
 
+	// Un fondo transparente solo puede representarse si la imagen lleva canal
+	// alfa (una JPEG de entrada no lo tiene); lo añadimos antes de embedir.
+	if bg.A < 255 {
+		if err := img.AddAlpha(); err != nil {
+			return err
+		}
+	}
+
 	// Rellena el espacio sobrante con el color de fondo, centrando la imagen.
 	if img.Width() < w || img.Height() < h {
 		padW := w

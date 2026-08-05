@@ -37,6 +37,8 @@ type trCase struct {
 	magic []magicAt
 	// equalChannels positions that must have R==G==B (grayscale).
 	equalChannels [][2]int
+	// transparent positions that must have alpha == 0 (transparent padding).
+	transparent [][2]int
 	// skipOn contains substrings; if any appears in the error the test is skipped
 	// (used for codecs not compiled into a given libvips build).
 	skipOn []string
@@ -75,6 +77,9 @@ func TestProcessImageCases(t *testing.T) {
 			pixels: []pixelCheck{{100, 72, red, 15}}},
 		{name: "pad-resize-red-bg", raw: "w-400,h-400,cm-pad_resize,bg-FF0000", wantCT: "image/png", wantW: 400, wantH: 400,
 			pixels: []pixelCheck{{0, 0, red, 5}, {399, 399, red, 5}, {100, 120, red, 15}}},
+		{name: "pad-resize-transparent", raw: "w-400,h-400,cm-pad_resize,bg-00000000", wantCT: "image/png", wantW: 400, wantH: 400,
+			pixels:       []pixelCheck{{100, 120, red, 15}},
+			transparent: [][2]int{{0, 0}, {399, 399}, {399, 0}, {0, 399}}},
 		{name: "pad-resize-width-only", raw: "w-400,cm-pad_resize", wantCT: "image/png", wantW: 400, wantH: 300},
 		{name: "aspect-4-3", raw: "ar-4-3", wantCT: "image/png", wantW: 200, wantH: 150,
 			pixels: []pixelCheck{{50, 36, red, 5}}},
@@ -144,6 +149,9 @@ func TestProcessImageCases(t *testing.T) {
 			for _, pos := range c.equalChannels {
 				assertEqualChannels(t, out, pos[0], pos[1])
 			}
+			for _, pos := range c.transparent {
+				assertTransparent(t, out, pos[0], pos[1])
+			}
 			assertMagic(t, out, c.magic)
 			savePNG(t, c.name, out)
 		})
@@ -168,6 +176,14 @@ func assertEqualChannels(t *testing.T, buf []byte, x, y int) {
 	c := colorAt(t, buf, x, y)
 	if !near(c.R, c.G, 20) || !near(c.G, c.B, 20) {
 		t.Errorf("pixel (%d,%d) not grayscale: %v", x, y, c)
+	}
+}
+
+func assertTransparent(t *testing.T, buf []byte, x, y int) {
+	t.Helper()
+	c := colorAt(t, buf, x, y)
+	if int(c.A) > 32 {
+		t.Errorf("pixel (%d,%d) not transparent: %v", x, y, c)
 	}
 }
 
