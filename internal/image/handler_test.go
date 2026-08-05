@@ -33,7 +33,7 @@ func newTestProjectCache() *tenant.ProjectCache {
 func TestHandlerImageNotFound(t *testing.T) {
 	pc := newTestProjectCache()
 	lru := cache.NewLRUCache(64, 3600)
-	h := NewHandler(pc, lru, nil)
+	h := NewHandler(pc, lru, nil, 4)
 
 	r := chi.NewRouter()
 	r.Get("/{slug}/{*}", h.Serve)
@@ -45,7 +45,7 @@ func TestHandlerImageNotFound(t *testing.T) {
 func TestHandlerSlugNotFound(t *testing.T) {
 	pc := newTestProjectCache()
 	lru := cache.NewLRUCache(64, 3600)
-	h := NewHandler(pc, lru, nil)
+	h := NewHandler(pc, lru, nil, 4)
 
 	r := chi.NewRouter()
 	r.Get("/{slug}/{*}", h.Serve)
@@ -57,7 +57,7 @@ func TestHandlerSlugNotFound(t *testing.T) {
 func TestHandlerPathTraversal(t *testing.T) {
 	pc := newTestProjectCache()
 	lru := cache.NewLRUCache(64, 3600)
-	h := NewHandler(pc, lru, nil)
+	h := NewHandler(pc, lru, nil, 4)
 
 	r := chi.NewRouter()
 	r.Get("/{slug}/{*}", h.Serve)
@@ -70,7 +70,7 @@ func TestHandlerPathTraversal(t *testing.T) {
 func TestHandlerEmptyPath(t *testing.T) {
 	pc := newTestProjectCache()
 	lru := cache.NewLRUCache(64, 3600)
-	h := NewHandler(pc, lru, nil)
+	h := NewHandler(pc, lru, nil, 4)
 
 	r := chi.NewRouter()
 	r.Get("/{slug}/{*}", h.Serve)

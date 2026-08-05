@@ -21,6 +21,7 @@ func NewImagerRouter(
 	corsMiddleware *middleware.CORS,
 	repo *database.Repo,
 	recorder image.MetricsRecorder,
+	transformConcurrency int,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -33,7 +34,7 @@ func NewImagerRouter(
 	r.Get("/health", healthHandler.Deep)
 	r.Handle("/metrics", promhttp.Handler())
 
-	imageHandler := image.NewHandler(projectCache, lruCache, recorder)
+	imageHandler := image.NewHandler(projectCache, lruCache, recorder, transformConcurrency)
 	r.With(middleware.RateLimit(rateLimiter)).Get("/{slug}/*", imageHandler.Serve)
 
 	return r

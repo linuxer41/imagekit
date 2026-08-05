@@ -62,7 +62,7 @@ func main() {
 	recorder.Start(ctx)
 	defer recorder.Stop()
 
-	handler := router.NewImagerRouter(projectCache, lruCache, rateLimiter, corsMW, repo, recorder)
+	handler := router.NewImagerRouter(projectCache, lruCache, rateLimiter, corsMW, repo, recorder, cfg.TransformConcurrency)
 
 	server.Run(cfg.ImagerHTTPAddr, handler)
 }

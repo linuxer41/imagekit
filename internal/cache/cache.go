@@ -14,6 +14,7 @@ type entry struct {
 	data        []byte
 	contentType string
 	expiresAt   time.Time
+	notFound    bool
 }
 
 type LRUCache struct {
@@ -44,7 +45,7 @@ func (c *LRUCache) Get(key string) ([]byte, string, bool) {
 	e, ok := c.cache.Get(key)
 	c.mu.RUnlock()
 
-	if !ok {
+	if !ok || e.notFound {
 		metrics.CacheMisses.Inc()
 		return nil, "", false
 	}
@@ -79,6 +80,40 @@ func (c *LRUCache) Set(key string, data []byte, contentType string) {
 	c.mu.Unlock()
 
 	metrics.CacheSize.Set(float64(size))
+}
+
+func (c *LRUCache) SetNotFound(key string, ttl time.Duration) {
+	e := &entry{
+		notFound:  true,
+		expiresAt: time.Now().Add(ttl),
+	}
+
+	c.mu.Lock()
+	c.cache.Add(key, e)
+	size := c.cache.Len()
+	c.mu.Unlock()
+
+	metrics.CacheSize.Set(float64(size))
+}
+
+func (c *LRUCache) GetNotFound(key string) bool {
+	c.mu.RLock()
+	e, ok := c.cache.Get(key)
+	c.mu.RUnlock()
+
+	if !ok || !e.notFound {
+		return false
+	}
+
+	if time.Now().After(e.expiresAt) {
+		c.mu.Lock()
+		c.cache.Remove(key)
+		c.mu.Unlock()
+		metrics.CacheEvictions.Inc()
+		return false
+	}
+
+	return true
 }
 
 func (c *LRUCache) InvalidatePrefix(prefix string) {

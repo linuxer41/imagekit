@@ -22,6 +22,7 @@ type Config struct {
 	LogLevel      string
 	CacheSizeMB   int
 	CacheTTL      int
+	TransformConcurrency int
 	AdminUser     string
 	AdminPass     string
 	CORSOrigins   string
@@ -60,6 +61,7 @@ func Load() *Config {
 		LogLevel:   env("LOG_LEVEL", "info"),
 		CacheSizeMB: envInt("CACHE_SIZE_MB", 256),
 		CacheTTL:   envInt("CACHE_TTL_SEC", 86400),
+		TransformConcurrency: envInt("TRANSFORM_CONCURRENCY", 8),
 		AdminUser:  env("ADMIN_USER", "admin"),
 		AdminPass:  env("ADMIN_PASSWORD", "admin123"),
 		CORSOrigins: env("CORS_ORIGINS", "*"),

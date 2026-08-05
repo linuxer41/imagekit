@@ -69,6 +69,7 @@ docker compose up -d
 | `JWT_SECRET` | — | Secreto JWT (requerido) |
 | `CACHE_SIZE_MB` | `256` | Tamaño máximo de caché LRU (~20 keys por MB) |
 | `CACHE_TTL_SEC` | `86400` | TTL de caché (24h) |
+| `TRANSFORM_CONCURRENCY` | `8` | Transformaciones simultáneas máximas (protege la CPU) |
 | `ADMIN_USER` | `admin` | Usuario admin inicial (se crea automáticamente) |
 | `ADMIN_PASSWORD` | `admin123` | Password admin inicial |
 | `CORS_ORIGINS` | `*` | Orígenes CORS |
@@ -368,7 +369,7 @@ Request GET /vendemas/logo.webp?tr=w-200
   ┌─ ¿Ruta existe? ─→ No → 404
   │
   ▼ Sí
-  ┌─ ¿Path traversal? ─→ Sí → 403
+  ┌─ ¿Path traversal? (solo componentes `..`) ─→ Sí → 403
   │
   ▼ No
   ┌─ ¿Proyecto en cache? ─→ No → 404
@@ -389,11 +390,15 @@ Request GET /vendemas/logo.webp?tr=w-200
   ┌─ Procesar con libvips:
   │   trim → rotate → resize (ar + cm) → effects → export
   │
-  ▼
-  ┌─ Guardar en LRU cache
+  ▼ ¿Transformación exitosa?
+  │   Sí → Sirve imagen transformada (Cache-Control immutable)
+  │   No  → Fallback: sirve imagen original con content-type detectado
   │
   ▼
-  Sirve imagen transformada (Cache-Control immutable)
+  Guardar en LRU cache
+  │
+  ▼
+  Sirve imagen (Cache-Control immutable)
 ```
 
 ## Métricas Prometheus
@@ -412,6 +417,20 @@ Todas las métricas expuestas en `/metrics` (puerto del servicio):
 | `imagekit_cache_evictions_total` | Counter | — | Entradas eliminadas de caché |
 | `imagekit_cache_entries` | Gauge | — | Entradas actuales en caché |
 | `imagekit_active_projects` | Gauge | — | Proyectos activos en cache |
+
+---
+
+## Notas de implementación
+
+### Validación de Path Traversal
+
+La validación solo bloquea `..` como **componente de directorio** (ej: `../file`, `subdir/../../file`), no como parte del nombre de archivo. Esto permite archivos como `image_v2.a.b..jpg` o `photo (1).png` sin falsos positivos.
+
+La validación también decodifica URLs URL-encoded (`%2f`, `%2e%2e`) antes de verificar.
+
+### Fallback en Transformación
+
+Si la transformación con libvips falla (formato no soportado, decoder faltante, etc.), el servidor sirve la imagen original en vez de retornar HTTP 500. Esto permite que imágenes en formatos exóticos (AVIF sin soporte, etc.) se sirvan sin transformar.
 
 ---
 

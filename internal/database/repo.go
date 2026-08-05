@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"time"
 
@@ -458,14 +459,15 @@ func (r *Repo) GetProjectSummary(ctx context.Context, projectID int) (*ProjectSu
 			COALESCE(SUM(requests), 0) as total_requests,
 			COALESCE(SUM(bandwidth_bytes), 0) as total_bandwidth,
 			COALESCE(SUM(errors), 0) as total_errors,
-			COALESCE(SUM(cache_hits), 0) + COALESCE(SUM(cache_misses), 0) as total_cacheable
+			COALESCE(SUM(cache_hits), 0) as total_cache_hits,
+			COALESCE(SUM(cache_misses), 0) as total_cache_misses
 		FROM project_metrics WHERE project_id = $1`, projectID)
-	if err := row2.Scan(&ps.RequestsTotal, &ps.BandwidthBytesTotal, &ps.ErrorsTotal, &ps.CacheHitsToday); err != nil {
-		_ = err // ignore partial data
+	var totalCacheHits, totalCacheMisses int64
+	if err := row2.Scan(&ps.RequestsTotal, &ps.BandwidthBytesTotal, &ps.ErrorsTotal, &totalCacheHits, &totalCacheMisses); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("get total metrics", "project_id", projectID, "error", err)
 	}
-	_ = row2 // reuse cache_hits_today for the total: compute ratio
-	totalCacheHits := ps.CacheHitsToday // reused field as total
-	totalCacheable := ps.CacheMissesToday + totalCacheHits
+
+	totalCacheable := totalCacheHits + totalCacheMisses
 	if totalCacheable > 0 {
 		ps.CacheHitRatio = float64(totalCacheHits) / float64(totalCacheable) * 100
 	}
