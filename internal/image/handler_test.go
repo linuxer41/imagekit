@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/vendemas/imagekit/internal/cache"
@@ -81,7 +82,7 @@ func TestHandlerEmptyPath(t *testing.T) {
 
 func TestServeBytesSetsHeaders(t *testing.T) {
 	w := httptest.NewRecorder()
-	serveBytes(w, []byte("fake-image-data"), "image/jpeg", 86400)
+	serveBytes(w, []byte("fake-image-data"), "image/jpeg", 86400, time.Now())
 
 	if ct := w.Header().Get("Content-Type"); ct != "image/jpeg" {
 		t.Errorf("content-type: got %s, want image/jpeg", ct)
@@ -94,6 +95,9 @@ func TestServeBytesSetsHeaders(t *testing.T) {
 	}
 	if cl := w.Header().Get("Content-Length"); cl != "15" {
 		t.Errorf("content-length: got %s, want 15", cl)
+	}
+	if xpt := w.Header().Get("X-Process-Time"); xpt == "" {
+		t.Error("x-process-time should be set")
 	}
 }
 

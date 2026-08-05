@@ -121,7 +121,7 @@ func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) {
 		isCacheHit = true
 		bandwidth = int64(len(cached))
 		metrics.CacheHits.Inc()
-		serveBytes(w, cached, ct, immutableCacheAge)
+		serveBytes(w, cached, ct, immutableCacheAge, start)
 		metrics.RequestDuration.WithLabelValues(slug, "cache_hit").Observe(time.Since(start).Seconds())
 		return
 	}
@@ -167,7 +167,7 @@ func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) {
 		h.lruCache.Set(cacheKey, out, contentType)
 		metrics.RequestsTotal.WithLabelValues(slug, contentType, "true").Inc()
 		metrics.RequestDuration.WithLabelValues(slug, "transform").Observe(time.Since(start).Seconds())
-		serveBytes(w, out, contentType, immutableCacheAge)
+		serveBytes(w, out, contentType, immutableCacheAge, start)
 		return
 	}
 
@@ -175,10 +175,13 @@ func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) {
 	contentType := detectContentType(data, filePath)
 	metrics.RequestsTotal.WithLabelValues(slug, contentType, "false").Inc()
 	metrics.RequestDuration.WithLabelValues(slug, "original").Observe(time.Since(start).Seconds())
-	serveBytes(w, data, contentType, immutableCacheAge)
+	serveBytes(w, data, contentType, immutableCacheAge, start)
 }
 
-func serveBytes(w http.ResponseWriter, data []byte, contentType string, maxAge int) {
+// serveBytes escribe la imagen y añade X-Process-Time (ms) indicando el
+// tiempo total de procesamiento de la request en el servidor.
+func serveBytes(w http.ResponseWriter, data []byte, contentType string, maxAge int, start time.Time) {
+	w.Header().Set("X-Process-Time", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d, immutable", maxAge))
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
