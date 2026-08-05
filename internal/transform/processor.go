@@ -19,7 +19,14 @@ func ProcessImage(input []byte, p params.Params) ([]byte, string, error) {
 	}
 
 	if p.Trim > 0 {
-		left, top, width, height, err := img.FindTrim(float64(p.Trim), nil)
+		// govips FindTrim dereferences the background color unconditionally,
+		// so sample the top-left corner instead of passing nil.
+		px, err := img.GetPoint(0, 0)
+		if err != nil {
+			return nil, "", fmt.Errorf("sample trim background: %w", err)
+		}
+		bg := &vips.Color{R: uint8(px[0]), G: uint8(px[1]), B: uint8(px[2])}
+		left, top, width, height, err := img.FindTrim(float64(p.Trim), bg)
 		if err != nil {
 			return nil, "", fmt.Errorf("find trim: %w", err)
 		}

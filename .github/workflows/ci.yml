@@ -57,6 +57,28 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/imagekit-imager:latest,${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/imagekit-imager:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
 
+  transform-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Install libvips
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips-dev pkg-config
+      - name: Run transform tests
+        run: CGO_ENABLED=1 go test ./internal/transform/ -count=1 -v
+      - name: Upload output images
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: transform-outputs
+          path: internal/transform/testdata/out/
+          if-no-files-found: ignore
+
   panel:
     runs-on: ubuntu-latest
     permissions:

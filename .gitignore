@@ -9,6 +9,9 @@
 bin/
 vendor/
 
+# Test output images
+internal/transform/testdata/out/
+
 # Frontend
 node_modules/
 frontend/.svelte-kit/

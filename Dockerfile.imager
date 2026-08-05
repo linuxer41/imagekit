@@ -31,3 +31,15 @@ USER appuser
 EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s CMD wget -qO- http://localhost:9000/health || exit 1
 CMD ["/bin/imager"]
+
+# --- test stage ---------------------------------------------------------
+# Prepares a libvips-enabled environment for running the transform tests.
+# The tests are run via scripts/test-transform.ps1 (or CI), which mount
+# ./internal/transform/testdata/out as a volume so the generated PNGs are
+# written back to the host for visual inspection.
+FROM golang:alpine AS test
+RUN apk add --no-cache gcc musl-dev vips-dev
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .

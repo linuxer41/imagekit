@@ -196,6 +196,8 @@ Efectos disponibles:
 | `ow` | `ow-{px}` | Ancho de superposición |
 | `oh` | `oh-{px}` | Alto de superposición |
 
+> **Nota:** `oi`, `ot`, `ox`, `oy`, `ow`, `oh` se parsean pero **aún no se aplican** en el procesador. Se ignoran silenciosamente.
+
 ### Bordes y Radios
 
 | Parámetro | Formato | Descripción |
@@ -203,11 +205,26 @@ Efectos disponibles:
 | `b` | `b-{n}_{color}` | Borde (ancho_color) |
 | `l` | `l-{px}` | Radio de borde redondeado |
 
+> **Nota:** `b` y `l` se parsean pero **aún no se aplican** en el procesador. Se ignoran silenciosamente.
+
 ### Otros
 
 | Parámetro | Formato | Descripción |
 |-----------|---------|-------------|
 | `pg` | `pg-{n}` | Página (para GIF/PDF multipágina) |
+
+> **Nota:** `pg` se parsea pero **aún no se aplica** en el procesador. Se ignora silenciosamente.
+
+### Parámetros parseados pero no implementados
+
+Los siguientes parámetros se aceptan en el parser y entran en el cache key, pero el
+procesador de imágenes **no los aplica** (se ignoran sin error):
+
+- `fo` (focus) — no implementado
+- `e-contrast`, `e-bright` — no implementados
+- `oi`, `ot`, `ox`, `oy`, `ow`, `oh` (superposiciones) — no implementados
+- `b` (borde), `l` (radio) — no implementados
+- `pg` (página) — no implementado
 
 ### Ejemplos de uso
 
@@ -227,6 +244,47 @@ GET /vendemas/foto.webp?tr=rt-90,f-webp,lo-true
 # Recorte automático de bordes + blur
 GET /vendemas/foto.webp?tr=t-5,bl-3.0
 ```
+
+---
+
+## Testing de transformaciones
+
+Los tests de transformación (`internal/transform/processor_test.go`) requieren
+**CGO + libvips**, por lo que no corren en el build normal (sin CGO). Existen
+dos formas de ejecutarlos:
+
+### 1. Script local con Docker
+
+```powershell
+.\scripts\test-transform.ps1
+```
+
+Construye el stage `test` del `Dockerfile.imager` (golang:alpine + vips-dev),
+corre los tests dentro del contenedor y escribe las imágenes de salida en
+`internal/transform/testdata/out/` para inspección visual.
+
+Para filtrar un caso específico:
+
+```powershell
+.\scripts\test-transform.ps1 -Filter TestProcessImageCases/pad-resize
+```
+
+### 2. CI (GitHub Actions)
+
+El job `transform-tests` en `.github/workflows/ci.yml` instala `libvips-dev`,
+corre los tests y sube `internal/transform/testdata/out/` como artifact
+(`transform-outputs`). Los PNGs generados se descargan desde GitHub Actions
+para verificar visualmente cada caso.
+
+### Cobertura
+
+Cada caso valida dimensiones, content-type, formato (magic bytes) y/o color de
+píxel en posiciones clave (ej. esquinas del pad_resize, centro del crop,
+posición tras rotación). Además, cada test guarda su resultado como PNG en
+`testdata/out/`.
+
+Los parámetros marcados como "no implementados" tienen tests que verifican que
+se ignoran sin error y sin cambiar el resultado.
 
 ---
 
